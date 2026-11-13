@@ -202,3 +202,27 @@ We selected **Server-Sent Events (SSE)** over WebSockets for this application ba
 ### Q4: "How does the Public TV Kiosk screen stay in sync when a token is called from the Manager screen?"
 > **Answer**:
 > "The Public TV Kiosk maintains an open `EventSource` connection to the `/events` endpoint. When the manager clicks 'Call Next Token', the backend finishes the database update and invokes `eventService.broadcast('TOKEN_SERVED', { token })`. The browser's `EventSource` receives the JSON payload, parses the new token details, updates React state, and triggers the Web Audio API synthesis engine to play the two-tone lobby chime."
+
+---
+
+## 7. Progressive Innovations Implemented
+
+To deliver a production-grade, enterprise-ready system that exceeds standard CRUD requirements, the following advanced modules were designed:
+
+1. **AI Queue Copilot & SLA Intelligence**:
+   - Continuous velocity analysis ($\lambda$ arrival vs $\mu$ service rate).
+   - Automated detection of SLA breaches (> 10 min waiting) with a 1-click **"⚡ Escalate to #1"** priority bypass.
+   - Smart staffing heuristics: forecasts congestion surges and recommends counter openings.
+
+2. **Web Speech API Voice Announcements (Text-to-Speech)**:
+   - Synthesizes clear audible lobby callouts natively in the browser: *"Token CS-011, Jonathan Doe, please proceed to Counter 1."*
+   - Preceded by a Web Audio API two-tone chime (*Ding-Dong*), configurable on/off per screen.
+
+3. **Interactive Drag-and-Drop Reordering**:
+   - Complements the Up/Down buttons with standard HTML5 drag-and-drop positional reordering.
+
+4. **Customer Live Mobile Tracker**:
+   - Customer-facing smartphone view simulating mobile ticket tracking with real-time SSE progress updates.
+
+5. **Desk Operator Keyboard Accelerators**:
+   - Single-key actions (`[Space]` / `[N]` for Call Next, `[C]` for Complete, `[A]` for Add Person) for high-speed counter operations.
