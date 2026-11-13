@@ -66,18 +66,18 @@ npm run seed
 ```
 
 ### 4. Run the Application
-You can run in **Production Mode** (single unified server on port 5000):
+You can run in **Production Mode** (single unified server on port 5050):
 ```bash
 npm run build
 npm start
 ```
-*Open your browser at [http://localhost:5000](http://localhost:5000)*
+*Open your browser at [http://localhost:5050](http://localhost:5050)*
 
 Or run in **Development Mode** (with hot module reload):
 ```bash
 npm run dev
 ```
-*Frontend dev server runs at [http://localhost:3000](http://localhost:3000) and proxies API requests to [http://localhost:5000](http://localhost:5000).*
+*Frontend dev server runs at [http://localhost:3000](http://localhost:3000) and proxies API requests to [http://localhost:5050](http://localhost:5050).*
 
 ---
 
