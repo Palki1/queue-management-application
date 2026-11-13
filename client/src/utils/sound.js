@@ -93,6 +93,46 @@ class SoundEffects {
       console.warn('Success sound failed:', err);
     }
   }
+
+  /**
+   * Progressive Text-To-Speech (TTS) Lobby Announcement
+   * Synthesizes voice announcement: "Token CS-011, please proceed to Counter 1"
+   */
+  speakAnnouncement(tokenNumber, customerName = '', counterName = 'Counter 1') {
+    // Play chime first
+    this.playChime();
+
+    if (typeof window === 'undefined' || !('speechSynthesis' in window)) {
+      return;
+    }
+
+    try {
+      // Small 0.6s delay to let the two-tone chime ring first
+      setTimeout(() => {
+        window.speechSynthesis.cancel(); // Stop any pending speech
+
+        // Spell out token prefix and number clearly, e.g. "Token C S 0 1 1"
+        const formattedToken = tokenNumber.replace(/(\w)/g, '$1 ').trim();
+        const text = `Token ${tokenNumber}. ${customerName ? customerName + '.' : ''} Please proceed to ${counterName}.`;
+        
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.rate = 0.95; // Slightly measured, professional pace
+        utterance.pitch = 1.05;
+        utterance.volume = 1.0;
+
+        // Try to pick a natural English voice if available
+        const voices = window.speechSynthesis.getVoices();
+        const preferredVoice = voices.find(v => v.lang.startsWith('en') && (v.name.includes('Natural') || v.name.includes('Samantha') || v.name.includes('Google') || v.name.includes('Daniel')));
+        if (preferredVoice) {
+          utterance.voice = preferredVoice;
+        }
+
+        window.speechSynthesis.speak(utterance);
+      }, 650);
+    } catch (err) {
+      console.warn('Speech synthesis announcement error:', err);
+    }
+  }
 }
 
 export const sounds = new SoundEffects();

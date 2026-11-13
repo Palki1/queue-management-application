@@ -13,11 +13,15 @@ import {
   Ticket,
   AlertCircle,
   MoreVertical,
-  CheckCircle2
+  CheckCircle2,
+  GripVertical,
+  Zap,
+  Smartphone,
+  ShieldAlert
 } from 'lucide-react';
 import { formatDuration, formatTime, getWaitTimeColor } from '../utils/formatters';
 
-export default function TokenList({ onOpenAddToken, onOpenTicket }) {
+export default function TokenList({ onOpenAddToken, onOpenTicket, onOpenTracker }) {
   const {
     activeQueue,
     tokens,
@@ -26,13 +30,16 @@ export default function TokenList({ onOpenAddToken, onOpenTicket }) {
     searchQuery,
     setSearchQuery,
     moveToken,
+    moveToPosition,
+    escalateToken,
     serveSpecific,
     cancelToken,
     isLoadingTokens
   } = useQueue();
 
-  // State for live elapsed time updates
   const [currentTime, setCurrentTime] = useState(Date.now());
+  const [draggedTokenId, setDraggedTokenId] = useState(null);
+  const [dragOverPosition, setDragOverPosition] = useState(null);
 
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(Date.now()), 1000);
@@ -62,6 +69,9 @@ export default function TokenList({ onOpenAddToken, onOpenTicket }) {
               <span>Waiting Queue</span>
               <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">
                 {waitingTokens.length} Waiting
+              </span>
+              <span className="hidden sm:inline-flex text-[11px] font-normal text-slate-400">
+                (Drag & drop rows or click ↑ ↓ to reorder)
               </span>
             </h3>
             <p className="text-xs text-slate-500 mt-0.5">
@@ -146,22 +156,64 @@ export default function TokenList({ onOpenAddToken, onOpenTicket }) {
               waitSeconds = Math.max(0, Math.floor((currentTime - createdMs) / 1000));
             }
 
+            const isSlaBreached = isWaiting && waitSeconds > 600; // > 10m
             const isTop = isWaiting && token.position === 1;
             const isBottom = isWaiting && token.position >= maxWaitingPosition;
+            const isDragTarget = isWaiting && dragOverPosition === token.position;
 
             return (
               <div
                 key={token.id}
-                className={`p-3.5 sm:p-4 flex flex-col md:flex-row md:items-center justify-between gap-3 transition-colors ${
-                  isServing
+                draggable={isWaiting}
+                onDragStart={(e) => {
+                  if (!isWaiting) return;
+                  setDraggedTokenId(token.id);
+                  e.dataTransfer.setData('text/plain', String(token.position));
+                }}
+                onDragOver={(e) => {
+                  if (!isWaiting) return;
+                  e.preventDefault();
+                  if (dragOverPosition !== token.position) {
+                    setDragOverPosition(token.position);
+                  }
+                }}
+                onDragLeave={() => {
+                  if (dragOverPosition === token.position) {
+                    setDragOverPosition(null);
+                  }
+                }}
+                onDrop={(e) => {
+                  if (!isWaiting || !draggedTokenId) return;
+                  e.preventDefault();
+                  moveToPosition(draggedTokenId, token.position);
+                  setDraggedTokenId(null);
+                  setDragOverPosition(null);
+                }}
+                className={`p-3.5 sm:p-4 flex flex-col md:flex-row md:items-center justify-between gap-3 transition-all ${
+                  isDragTarget
+                    ? 'border-t-2 border-indigo-600 bg-indigo-50/80 shadow-inner'
+                    : isServing
                     ? 'bg-indigo-50/60 border-l-4 border-l-indigo-600'
+                    : isSlaBreached
+                    ? 'bg-amber-50/40 border-l-4 border-l-amber-500'
                     : isTop
                     ? 'bg-amber-50/30 hover:bg-amber-50/60'
                     : 'hover:bg-slate-50/70'
                 }`}
               >
-                {/* Left: Position Badge, Token #, Customer Details */}
-                <div className="flex items-center gap-3 sm:gap-4 flex-1 min-w-0">
+                {/* Left: Drag Handle, Position Badge, Token #, Customer Details */}
+                <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
+                  
+                  {/* Drag Handle */}
+                  {isWaiting && (
+                    <div
+                      className="cursor-grab active:cursor-grabbing text-slate-300 hover:text-slate-600 p-1 -ml-1 transition-colors hidden sm:block"
+                      title="Drag to reorder position in queue"
+                    >
+                      <GripVertical className="w-4 h-4" />
+                    </div>
+                  )}
+
                   {/* Position Badge (Requirement 4) */}
                   <div className="shrink-0 text-center">
                     {isWaiting ? (
@@ -198,6 +250,14 @@ export default function TokenList({ onOpenAddToken, onOpenTicket }) {
                       <span className="text-sm font-semibold text-slate-800 truncate">
                         {token.customer_name}
                       </span>
+
+                      {/* SLA Breach Alert Tag */}
+                      {isSlaBreached && (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-bold rounded-md bg-amber-100 text-amber-900 border border-amber-300 animate-pulse">
+                          <AlertCircle className="w-3 h-3 text-amber-600" />
+                          <span>SLA &gt; 10m</span>
+                        </span>
+                      )}
 
                       {/* Priority Tag */}
                       {token.priority && token.priority !== 'NORMAL' && (
@@ -261,8 +321,20 @@ export default function TokenList({ onOpenAddToken, onOpenTicket }) {
                   )}
                 </div>
 
-                {/* Right: Actions (Move UP, Move DOWN, Serve, Cancel) */}
+                {/* Right: Actions (Move UP, Move DOWN, Serve, Cancel, Escalate) */}
                 <div className="flex items-center gap-1.5 shrink-0 pl-11 md:pl-0">
+                  
+                  {/* Quick Escalate to #1 Button (if not already #1) */}
+                  {isWaiting && !isTop && (
+                    <button
+                      onClick={() => escalateToken(token.id)}
+                      className="p-1.5 text-amber-600 hover:text-amber-800 hover:bg-amber-50 rounded-lg transition-colors"
+                      title="Quick Escalate to Position #1"
+                    >
+                      <Zap className="w-3.5 h-3.5 fill-current" />
+                    </button>
+                  )}
+
                   {/* Requirement 5: Move UP and DOWN in the Queue */}
                   {isWaiting && (
                     <div className="flex items-center bg-slate-100 rounded-lg p-0.5 border border-slate-200">
@@ -320,6 +392,17 @@ export default function TokenList({ onOpenAddToken, onOpenTicket }) {
                       title="Cancel Token"
                     >
                       <XCircle className="w-4 h-4" />
+                    </button>
+                  )}
+
+                  {/* Live Mobile Tracker Launcher */}
+                  {onOpenTracker && (
+                    <button
+                      onClick={() => onOpenTracker(token.token_number)}
+                      className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
+                      title="Open Live Customer Tracker for this Token"
+                    >
+                      <Smartphone className="w-4 h-4" />
                     </button>
                   )}
 

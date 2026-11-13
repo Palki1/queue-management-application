@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { QueueProvider, useQueue } from './context/QueueContext';
 
 import Navbar from './components/Navbar';
 import QueueSelector from './components/QueueSelector';
+import AIQueueAdvisor from './components/AIQueueAdvisor';
 import NowServingHero from './components/NowServingHero';
 import TokenList from './components/TokenList';
 import AnalyticsDashboard from './components/AnalyticsDashboard';
@@ -11,30 +12,70 @@ import AddTokenModal from './components/AddTokenModal';
 import CreateQueueModal from './components/CreateQueueModal';
 import CustomerTicketModal from './components/CustomerTicketModal';
 import PublicDisplayModal from './components/PublicDisplayModal';
+import CustomerLiveTrackerModal from './components/CustomerLiveTrackerModal';
+import KeyboardShortcutsModal from './components/KeyboardShortcutsModal';
 import LoginModal from './components/LoginModal';
 import Toast from './components/Toast';
 
-import { Sparkles, ArrowRight, ShieldCheck, Zap } from 'lucide-react';
+import { Sparkles, ArrowRight, ShieldCheck, Zap, Keyboard } from 'lucide-react';
 
 function MainApp() {
   const { isAuthenticated, demoLogin, isLoading } = useAuth();
-  const { activeQueue } = useQueue();
+  const { activeQueue, serveNext, completeToken, currentServing } = useQueue();
 
   const [activeTab, setActiveTab] = useState('operations'); // 'operations' | 'analytics'
   const [isAddTokenOpen, setIsAddTokenOpen] = useState(false);
   const [isCreateQueueOpen, setIsCreateQueueOpen] = useState(false);
   const [isPublicDisplayOpen, setIsPublicDisplayOpen] = useState(false);
+  const [isTrackerOpen, setIsTrackerOpen] = useState(false);
+  const [isShortcutsOpen, setIsShortcutsOpen] = useState(false);
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [selectedTicket, setSelectedTicket] = useState(null);
+  const [trackerTokenNumber, setTrackerTokenNumber] = useState('');
 
   const handleOpenTicket = (token) => {
     setSelectedTicket(token);
   };
 
+  const handleOpenTracker = (tokenNum = '') => {
+    setTrackerTokenNumber(tokenNum);
+    setIsTrackerOpen(true);
+  };
+
   const handleTokenCreated = (token) => {
-    // Open the ticket receipt right away for the new person
     setSelectedTicket(token);
   };
+
+  // Progressive Desk Operator Keyboard Shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      // Ignore if user is typing in form inputs
+      if (['INPUT', 'TEXTAREA', 'SELECT'].includes(e.target.tagName)) return;
+
+      if (e.code === 'Space' || e.key.toLowerCase() === 'n') {
+        e.preventDefault();
+        serveNext();
+      } else if (e.key.toLowerCase() === 'c' && currentServing) {
+        e.preventDefault();
+        completeToken(currentServing.id);
+      } else if (e.key.toLowerCase() === 'a') {
+        e.preventDefault();
+        setIsAddTokenOpen(true);
+      } else if (e.key.toLowerCase() === 't') {
+        e.preventDefault();
+        setIsPublicDisplayOpen(true);
+      } else if (e.key.toLowerCase() === 'm') {
+        e.preventDefault();
+        setIsTrackerOpen(true);
+      } else if (e.key === '?') {
+        e.preventDefault();
+        setIsShortcutsOpen(prev => !prev);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [serveNext, completeToken, currentServing]);
 
   if (isLoading) {
     return (
@@ -57,6 +98,8 @@ function MainApp() {
         onOpenCreateQueue={() => setIsCreateQueueOpen(true)}
         onOpenAddToken={() => setIsAddTokenOpen(true)}
         onOpenPublicDisplay={() => setIsPublicDisplayOpen(true)}
+        onOpenTracker={() => handleOpenTracker()}
+        onOpenShortcuts={() => setIsShortcutsOpen(true)}
       />
 
       {/* Main Content Container */}
@@ -106,6 +149,9 @@ function MainApp() {
               onOpenCreateQueue={() => setIsCreateQueueOpen(true)}
             />
 
+            {/* AI Queue Copilot & SLA Warnings */}
+            <AIQueueAdvisor />
+
             {/* "Now Serving" Counter & Call Next Token Hero (Requirement 6) */}
             <NowServingHero
               onOpenAddToken={() => setIsAddTokenOpen(true)}
@@ -116,6 +162,7 @@ function MainApp() {
             <TokenList
               onOpenAddToken={() => setIsAddTokenOpen(true)}
               onOpenTicket={handleOpenTicket}
+              onOpenTracker={handleOpenTracker}
             />
           </div>
         ) : (
@@ -129,10 +176,23 @@ function MainApp() {
       <footer className="mt-auto py-6 border-t border-slate-200/80 bg-white/60 text-center text-xs text-slate-500">
         <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2">
           <div>
-            <strong>Rugas QueueFlow</strong> • Full-Stack Queue & Token Management Platform
+            <strong>Rugas QueueFlow</strong> • Full-Stack AI-Enhanced Queue & Token Management Platform
           </div>
           <div className="flex items-center gap-4 text-slate-400">
-            <span>Built with React + Express + SQLite + Tailwind</span>
+            <button
+              onClick={() => setIsShortcutsOpen(true)}
+              className="text-slate-500 hover:text-indigo-600 font-medium flex items-center gap-1"
+            >
+              <Keyboard className="w-3.5 h-3.5" />
+              <span>Keyboard Shortcuts (?)</span>
+            </button>
+            <span>•</span>
+            <button
+              onClick={() => handleOpenTracker()}
+              className="text-indigo-600 hover:underline font-medium"
+            >
+              Customer Mobile Tracker
+            </button>
             <span>•</span>
             <button
               onClick={() => setIsPublicDisplayOpen(true)}
@@ -169,6 +229,17 @@ function MainApp() {
       <PublicDisplayModal
         isOpen={isPublicDisplayOpen}
         onClose={() => setIsPublicDisplayOpen(false)}
+      />
+
+      <CustomerLiveTrackerModal
+        isOpen={isTrackerOpen}
+        initialTokenNumber={trackerTokenNumber}
+        onClose={() => setIsTrackerOpen(false)}
+      />
+
+      <KeyboardShortcutsModal
+        isOpen={isShortcutsOpen}
+        onClose={() => setIsShortcutsOpen(false)}
       />
 
       <LoginModal

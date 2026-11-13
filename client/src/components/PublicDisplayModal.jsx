@@ -14,7 +14,7 @@ import {
 import { sounds } from '../utils/sound';
 
 export default function PublicDisplayModal({ isOpen, onClose }) {
-  const { activeQueue, queues, setActiveQueue, tokens, currentServing } = useQueue();
+  const { activeQueue, queues, setActiveQueue, tokens, currentServing, currentCounter } = useQueue();
   const [clock, setClock] = useState(new Date());
   const [isAudioEnabled, setIsAudioEnabled] = useState(true);
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -74,15 +74,16 @@ export default function PublicDisplayModal({ isOpen, onClose }) {
             ))}
           </select>
 
-          {/* Sound test button */}
+          {/* Sound & Voice test button */}
           <button
             onClick={() => {
-              sounds.playChime();
+              sounds.speakAnnouncement('CS-010', 'Sarah Jenkins', currentCounter || 'Counter 01');
             }}
-            title="Test Chime Sound"
-            className="p-2 text-slate-400 hover:text-white bg-slate-800 hover:bg-slate-700 rounded-lg transition-colors"
+            title="Test Voice Announcement (Ding-Dong + Speech)"
+            className="p-2 text-slate-400 hover:text-white bg-slate-800 hover:bg-slate-700 rounded-lg transition-colors flex items-center gap-1.5 text-xs font-medium"
           >
-            <Bell className="w-4 h-4" />
+            <Bell className="w-4 h-4 text-indigo-400" />
+            <span className="hidden sm:inline">Test Voice</span>
           </button>
 
           {/* Fullscreen Toggle */}
@@ -118,7 +119,7 @@ export default function PublicDisplayModal({ isOpen, onClose }) {
                 <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500" />
               </span>
               <span className="text-sm lg:text-base font-extrabold tracking-widest uppercase text-emerald-400">
-                NOW SERVING • COUNTER 01
+                NOW SERVING • {currentCounter ? currentCounter.toUpperCase() : 'COUNTER 01'}
               </span>
             </div>
 

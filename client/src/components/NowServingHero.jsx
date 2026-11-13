@@ -19,6 +19,7 @@ export default function NowServingHero({ onOpenAddToken, onOpenTicket }) {
     activeQueue,
     tokens,
     currentServing,
+    currentCounter,
     serveNext,
     completeToken,
     cancelToken
@@ -69,7 +70,7 @@ export default function NowServingHero({ onOpenAddToken, onOpenTicket }) {
               <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500" />
             </span>
             <span className="text-xs font-semibold tracking-wider uppercase text-emerald-400">
-              Service Desk Counter 01 • {activeQueue.name}
+              Service Desk • {currentCounter || 'Counter 01'} • {activeQueue.name}
             </span>
           </div>
 

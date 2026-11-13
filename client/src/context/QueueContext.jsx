@@ -19,6 +19,8 @@ export function QueueProvider({ children }) {
   const [isLoadingTokens, setIsLoadingTokens] = useState(false);
   const [isSseConnected, setIsSseConnected] = useState(false);
   const [toasts, setToasts] = useState([]);
+  const [currentCounter, setCurrentCounter] = useState('Counter 01');
+  const [voiceAnnounceEnabled, setVoiceAnnounceEnabled] = useState(true);
 
   const addToast = useCallback((message, type = 'info') => {
     const id = Date.now() + Math.random();
@@ -114,7 +116,12 @@ export function QueueProvider({ children }) {
 
           // Play sound and trigger confetti on service actions
           if (event.type === 'TOKEN_SERVED') {
-            sounds.playChime();
+            const token = event.payload?.token;
+            if (voiceAnnounceEnabled && token) {
+              sounds.speakAnnouncement(token.token_number, token.customer_name, currentCounter);
+            } else {
+              sounds.playChime();
+            }
           } else if (event.type === 'TOKEN_COMPLETED') {
             sounds.playSuccess();
             confetti({
@@ -176,6 +183,32 @@ export function QueueProvider({ children }) {
       const res = await api.moveToken(activeQueue.id, tokenId, direction);
       if (res.success) {
         addToast(res.message, 'info');
+        await refreshTokens();
+      }
+    } catch (err) {
+      addToast(err.message, 'error');
+    }
+  };
+
+  const handleMoveToPosition = async (tokenId, targetPosition) => {
+    if (!activeQueue) return;
+    try {
+      const res = await api.moveToken(activeQueue.id, tokenId, { targetPosition });
+      if (res.success) {
+        addToast(res.message, 'info');
+        await refreshTokens();
+      }
+    } catch (err) {
+      addToast(err.message, 'error');
+    }
+  };
+
+  const handleEscalateToken = async (tokenId) => {
+    if (!activeQueue) return;
+    try {
+      const res = await api.moveToken(activeQueue.id, tokenId, { targetPosition: 1 });
+      if (res.success) {
+        addToast(`⚡ Token escalated to #1 priority!`, 'success');
         await refreshTokens();
       }
     } catch (err) {
@@ -272,9 +305,15 @@ export function QueueProvider({ children }) {
       setActiveQueue,
       refreshQueues,
       refreshTokens,
+      currentCounter,
+      setCurrentCounter,
+      voiceAnnounceEnabled,
+      setVoiceAnnounceEnabled,
       createQueue: handleCreateQueue,
       addToken: handleAddToken,
       moveToken: handleMoveToken,
+      moveToPosition: handleMoveToPosition,
+      escalateToken: handleEscalateToken,
       serveNext: handleServeNext,
       serveSpecific: handleServeSpecific,
       completeToken: handleCompleteToken,

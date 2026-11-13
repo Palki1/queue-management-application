@@ -126,14 +126,15 @@ export const api = {
     return handleResponse(res);
   },
 
-  async moveToken(queueId, tokenId, direction) {
+  async moveToken(queueId, tokenId, payload) {
+    const body = typeof payload === 'object' ? payload : { direction: payload };
     const res = await fetch(`${API_BASE}/queues/${queueId}/tokens/${tokenId}/move`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         ...getAuthHeader()
       },
-      body: JSON.stringify({ direction })
+      body: JSON.stringify(body)
     });
     return handleResponse(res);
   },
