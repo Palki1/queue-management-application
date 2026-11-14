@@ -6,7 +6,8 @@ import fs from 'fs';
 import { fileURLToPath } from 'url';
 
 import { config } from './config.js';
-import { initDatabase } from './db/database.js';
+import { db, initDatabase } from './db/database.js';
+import { runSeed } from './db/seed.js';
 
 import authRouter from './routes/auth.js';
 import queuesRouter from './routes/queues.js';
@@ -18,8 +19,16 @@ import { errorHandler } from './middleware/errorHandler.js';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Initialize SQLite tables
+// Initialize SQLite tables & auto-seed if fresh instance
 initDatabase();
+try {
+  const userCount = db.prepare('SELECT COUNT(*) as count FROM users').get();
+  if (!userCount || userCount.count === 0) {
+    runSeed();
+  }
+} catch (e) {
+  console.warn('Auto-seed check:', e.message);
+}
 
 const app = express();
 
