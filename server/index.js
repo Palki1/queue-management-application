@@ -40,21 +40,32 @@ if (config.isDev) {
   app.use(morgan('dev'));
 }
 
-// API Routes
+// API Routes (mounted with and without /api prefix for serverless compatibility)
 app.use('/api/auth', authRouter);
+app.use('/auth', authRouter);
+
 app.use('/api/queues', queuesRouter);
+app.use('/queues', queuesRouter);
+
 app.use('/api/queues/:queueId/tokens', tokensRouter);
+app.use('/queues/:queueId/tokens', tokensRouter);
+
 app.use('/api/analytics', analyticsRouter);
+app.use('/analytics', analyticsRouter);
+
 app.use('/events', eventsRouter);
+app.use('/api/events', eventsRouter);
 
 // Health check endpoint
-app.get('/api/health', (req, res) => {
+const healthHandler = (req, res) => {
   res.json({
     status: 'ok',
     timestamp: new Date().toISOString(),
     uptime: process.uptime()
   });
-});
+};
+app.get('/api/health', healthHandler);
+app.get('/health', healthHandler);
 
 // Serve static frontend build if it exists
 const distPath = path.join(__dirname, '../dist');

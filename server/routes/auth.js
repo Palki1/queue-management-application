@@ -61,7 +61,7 @@ router.post('/register', (req, res, next) => {
     };
 
     const token = jwt.sign(
-      { id: user.id, username: user.username, email: user.email },
+      { id: user.id, username: user.username, email: user.email, name: user.name },
       config.jwtSecret,
       { expiresIn: config.jwtExpiresIn }
     );
@@ -119,7 +119,7 @@ router.post('/login', (req, res, next) => {
     };
 
     const token = jwt.sign(
-      { id: safeUser.id, username: safeUser.username, email: safeUser.email },
+      { id: safeUser.id, username: safeUser.username, email: safeUser.email, name: safeUser.name },
       config.jwtSecret,
       { expiresIn: config.jwtExpiresIn }
     );
@@ -140,21 +140,30 @@ router.post('/login', (req, res, next) => {
  */
 router.post('/demo-login', (req, res, next) => {
   try {
-    let demoUser = db.prepare('SELECT * FROM users WHERE email = ?').get('demo@rugas.com');
+    // Prefer the seeded manager Alex Morgan (who owns the pre-seeded active queues)
+    let demoUser = db.prepare('SELECT id, username, email, name FROM users WHERE email = ? OR username = ?').get('admin@rugas.com', 'manager');
+
+    if (!demoUser) {
+      demoUser = db.prepare('SELECT id, username, email, name FROM users WHERE email = ?').get('demo@rugas.com');
+    }
+
+    if (!demoUser) {
+      demoUser = db.prepare('SELECT id, username, email, name FROM users LIMIT 1').get();
+    }
 
     if (!demoUser) {
       const salt = bcrypt.genSaltSync(10);
-      const hash = bcrypt.hashSync('demo1234', salt);
+      const hash = bcrypt.hashSync('admin123', salt);
       const insert = db.prepare(`
         INSERT INTO users (username, email, password_hash, name)
         VALUES (?, ?, ?, ?)
-      `).run('demomanager', 'demo@rugas.com', hash, 'Rugas Demo Manager');
+      `).run('manager', 'admin@rugas.com', hash, 'Alex Morgan');
 
       demoUser = {
         id: Number(insert.lastInsertRowid),
-        username: 'demomanager',
-        email: 'demo@rugas.com',
-        name: 'Rugas Demo Manager'
+        username: 'manager',
+        email: 'admin@rugas.com',
+        name: 'Alex Morgan'
       };
     }
 
@@ -166,7 +175,7 @@ router.post('/demo-login', (req, res, next) => {
     };
 
     const token = jwt.sign(
-      { id: safeUser.id, username: safeUser.username, email: safeUser.email },
+      { id: safeUser.id, username: safeUser.username, email: safeUser.email, name: safeUser.name },
       config.jwtSecret,
       { expiresIn: config.jwtExpiresIn }
     );

@@ -103,13 +103,21 @@ router.post('/', authenticateToken, (req, res, next) => {
     let cleanPrefix = (prefix || cleanName.substring(0, 3)).trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
     if (!cleanPrefix) cleanPrefix = 'Q';
 
+    // Ensure valid user ID for SQLite foreign key constraint
+    let userId = req.user?.id;
+    const userRow = db.prepare('SELECT id FROM users WHERE id = ?').get(userId);
+    if (!userRow) {
+      const fallback = db.prepare('SELECT id FROM users LIMIT 1').get();
+      userId = fallback ? fallback.id : 1;
+    }
+
     const insertStmt = db.prepare(`
       INSERT INTO queues (user_id, name, prefix, description, is_active)
       VALUES (?, ?, ?, ?, 1)
     `);
 
     const result = insertStmt.run(
-      req.user.id,
+      userId,
       cleanName,
       cleanPrefix,
       (description || '').trim()

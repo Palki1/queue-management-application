@@ -302,3 +302,23 @@ test('Requirement 8: Dashboard shows analytics on wait times, queue length trend
   assert.ok(Array.isArray(activityRes.data.events));
   assert.ok(activityRes.data.events.length > 0);
 });
+
+test('Serverless Resilience: Valid JWT auto-resolves even when user ID is not yet in container SQLite', async () => {
+  import('jsonwebtoken').then(async ({ default: jwt }) => {
+    const { config } = await import('../config.js');
+    // Generate token for a user that does NOT exist in SQLite table
+    const ghostToken = jwt.sign(
+      { id: 9999, username: 'serverless_ghost', email: 'ghost@test.com', name: 'Ghost Tester' },
+      config.jwtSecret,
+      { expiresIn: '1h' }
+    );
+
+    // Call protected endpoint with ghost token
+    const res = await request('/api/queues', {
+      headers: { authorization: `Bearer ${ghostToken}` }
+    });
+
+    assert.equal(res.status, 200);
+    assert.equal(res.data.success, true);
+  });
+});

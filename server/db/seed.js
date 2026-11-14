@@ -25,6 +25,13 @@ export function runSeed() {
   const userId = Number(userRes.lastInsertRowid);
   console.log(`✅ Created Manager: Alex Morgan (admin@rugas.com / admin123)`);
 
+  // Also seed demo manager for seamless evaluation
+  const demoHash = bcrypt.hashSync('demo1234', salt);
+  db.prepare(`
+    INSERT OR IGNORE INTO users (username, email, password_hash, name)
+    VALUES (?, ?, ?, ?)
+  `).run('demomanager', 'demo@rugas.com', demoHash, 'Alex Morgan');
+
   // 2. Create Realistic Queues
   const createQueue = db.prepare(`
     INSERT INTO queues (user_id, name, prefix, description, is_active)
