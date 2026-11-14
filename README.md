@@ -1,10 +1,16 @@
 # Rugas QueueFlow — Full-Stack Queue & Token Management Platform
 
+[![Live App](https://img.shields.io/badge/Live%20App-Cloudflare%20Edge%20Live-6366f1.svg)](https://capital-proven-reservations-cheers.trycloudflare.com)
+[![GitHub Repo](https://img.shields.io/badge/GitHub-Palki1%2F--Queue--management--application---181717.svg?logo=github)](https://github.com/Palki1/-Queue-management-application-)
 [![Node.js](https://img.shields.io/badge/Node.js-v20%2B-green.svg)](https://nodejs.org/)
 [![React](https://img.shields.io/badge/React-18-blue.svg)](https://react.dev/)
 [![Tailwind CSS](https://img.shields.io/badge/TailwindCSS-v3-38bdf8.svg)](https://tailwindcss.com/)
 [![SQLite](https://img.shields.io/badge/SQLite-Built--in_node%3Asqlite-003b57.svg)](https://nodejs.org/api/sqlite.html)
 [![Tests](https://img.shields.io/badge/Tests-8%2F8_Passed-emerald.svg)](https://nodejs.org/api/test.html)
+
+> 🚀 **Live Demo URL**: [https://capital-proven-reservations-cheers.trycloudflare.com](https://capital-proven-reservations-cheers.trycloudflare.com)  
+> 📦 **GitHub Repository**: [https://github.com/Palki1/-Queue-management-application-](https://github.com/Palki1/-Queue-management-application-)  
+> 🔑 **1-Click Demo Login**: Click "1-Click Demo Login" on screen (or `admin@rugas.com` / `admin123`)
 
 A high-performance, full-stack enterprise queue management application engineered for real-time customer flow control, dynamic token prioritization, lobby kiosk displays, and data-driven wait time analytics.
 
